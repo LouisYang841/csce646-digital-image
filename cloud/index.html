@@ -62,10 +62,10 @@
         color: rgba(255, 255, 255, 0.74);
       }
 
-      /* 主标题：整个画面的视觉主角 */
+      /* 主标题：比原来小一半（字号的平方 = 面积，所以面积是原来的 1/4） */
       .title-block h1 {
         margin: 0;
-        font-size: clamp(2.5rem, min(15vw, 26vh), 13rem);
+        font-size: clamp(1.25rem, min(7.5vw, 13vh), 6.5rem);
         font-weight: 500;
         line-height: 1.02;
         letter-spacing: 0.08em;
@@ -279,7 +279,7 @@
           max-width: calc(100vw - 220px);
         }
         .title-block h1 {
-          font-size: clamp(1.75rem, 13vw, 3.25rem);
+          font-size: clamp(1.25rem, 6.5vw, 2rem);
           white-space: normal;
         }
       }
