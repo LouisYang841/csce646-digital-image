@@ -16,6 +16,7 @@ export default defineConfig({
         pr01: resolve(__dirname, "pr01/index.html"),
         pr02: resolve(__dirname, "pr02/index.html"),
         pr03: resolve(__dirname, "pr03/index.html"),
+        cloud: resolve(__dirname, "cloud/index.html"),
       },
     },
   },

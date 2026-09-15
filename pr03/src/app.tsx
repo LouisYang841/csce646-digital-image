@@ -1,5 +1,5 @@
 import React from "react";
-import { renderShaderToy, setIMouse, setISpeed_ } from "./shadertoy";
+import { renderShaderToy, setIMouse, setISpeed_ } from "../../shared/shadertoy";
 import { shaderSource } from "./shader";
 import { SliderHorizontal } from "./components/slider";
 import { GitHubLogoIcon, CodeIcon } from "@radix-ui/react-icons";
