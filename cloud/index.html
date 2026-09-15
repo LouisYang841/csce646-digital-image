@@ -45,6 +45,8 @@
         left: 34px;
         max-width: calc(100vw - 320px);
         pointer-events: none;
+        /* 标题区一律不换行（底下那个 secondary 说明行单独放开） */
+        white-space: nowrap;
         /* 画面是亮的雲层，得靠描边压住对比度；两层：边缘提清晰度 + 大范围柔光 */
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 6px 26px rgba(0, 0, 0, 0.45);
         font-family: "汉仪长宋", "汉仪长宋简", "HYChangSongJ", "HYChangSong",
@@ -98,6 +100,7 @@
         font-size: 0.6rem;
         letter-spacing: 0.12em;
         color: rgba(255, 255, 255, 0.55);
+        white-space: normal;
       }
 
       /* 右侧参数面板 */
@@ -280,7 +283,6 @@
         }
         .title-block h1 {
           font-size: clamp(1.25rem, 6.5vw, 2rem);
-          white-space: normal;
         }
       }
     </style>
