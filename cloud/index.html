@@ -37,37 +37,67 @@
       }
 
       /* 左上角标题 */
-      /* 汉仪长宋是商业字体，没自托管字体文件，所以只能：本机装了就用，
-         没装就回落到系统自带的宋体/明体（保持衬线观感一致）。 */
+      /* 长宋没自托管字体文件（汉仪长宋是商业字体），所以走系统栈：
+         装了长宋就用，没装回落到宋体/明体，反正衬线观感一致。 */
       .title-block {
         position: fixed;
-        top: 28px;
-        left: 32px;
+        top: 30px;
+        left: 34px;
+        max-width: calc(100vw - 320px);
         pointer-events: none;
-        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+        /* 画面是亮的雲层，得靠描边压住对比度；两层：边缘提清晰度 + 大范围柔光 */
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 6px 26px rgba(0, 0, 0, 0.45);
         font-family: "汉仪长宋", "汉仪长宋简", "HYChangSongJ", "HYChangSong",
-          "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong",
-          "SimSun", "宋体", serif;
+          "Source Han Serif SC", "Noto Serif CJK SC", "Noto Serif SC",
+          "Songti SC", "STSong", "SimSun", "宋体", "MingLiU", serif;
       }
 
+      /* 眉题：小 + 大字距，和主标题拉开接近 10 倍的字号差 */
       .title-block .eyebrow {
-        margin: 0 0 6px;
-        font-size: 10px;
-        letter-spacing: 0.22em;
-        color: var(--text-dim);
+        margin: 0 0 0.7em;
+        font-size: 0.7rem;
+        font-weight: 500;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.74);
       }
 
+      /* 主标题：整个画面的视觉主角 */
       .title-block h1 {
         margin: 0;
-        font-size: 34px;
-        font-weight: 600;
-        letter-spacing: 0.12em;
+        font-size: clamp(2.5rem, min(15vw, 26vh), 13rem);
+        font-weight: 500;
+        line-height: 1.02;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+      }
+
+      /* 署名行：小字标签 + 大一号的斜体英文名 */
+      .title-block .credit {
+        display: flex;
+        align-items: baseline;
+        gap: 0.9em;
+        margin: 1.1em 0 0;
+        font-size: 0.72rem;
+      }
+
+      .title-block .credit .role {
+        letter-spacing: 0.22em;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .title-block .credit .name {
+        font-family: Georgia, "Times New Roman", "Songti SC", "STSong", serif;
+        font-size: 1.75em;
+        font-style: italic;
+        letter-spacing: 0.02em;
       }
 
       .title-block .subtitle {
-        margin: 8px 0 0;
-        font-size: 11px;
-        color: var(--text-dim);
+        margin: 1.1em 0 0;
+        font-size: 0.6rem;
+        letter-spacing: 0.12em;
+        color: rgba(255, 255, 255, 0.55);
       }
 
       /* 右侧参数面板 */
@@ -246,9 +276,11 @@
         .title-block {
           top: 18px;
           left: 18px;
+          max-width: calc(100vw - 220px);
         }
         .title-block h1 {
-          font-size: 24px;
+          font-size: clamp(1.75rem, 13vw, 3.25rem);
+          white-space: normal;
         }
       }
     </style>
@@ -258,9 +290,13 @@
     <canvas id="my-canvas"></canvas>
 
     <header class="title-block">
-      <p class="eyebrow">PROCEDURAL LANDSCAPE</p>
+      <p class="eyebrow">Procedural Landscapes / 08</p>
       <h1>云间列车</h1>
-      <p class="subtitle">程序化生成的云层列车 · 课程作业 · 基于 mdb 的 ShaderToy 作品</p>
+      <p class="credit">
+        <span class="role">原著着色器作者</span>
+        <span class="name">mdb</span>
+      </p>
+      <p class="subtitle">原页 Up in the Cloud Sea · Tianxiu (Tyson) Zhou · 课程作业</p>
     </header>
 
     <button id="panel-toggle" title="显示 / 隐藏参数面板" aria-label="显示或隐藏参数面板">☰</button>
