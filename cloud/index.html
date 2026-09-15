@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>云间列车 | Up in the Cloud Sea</title>
     <style>
+      /* 思源宋体 Light（OFL 开源，可自托管）。
+         只按标题区实际用到的字做了子集，12KB，避免引入完整 CJK 字体的 8MB。
+         注意：改标题文案后如果出现新字符，会回落到下面的系统宋体。 */
+      @font-face {
+        font-family: "CloudTitleSerif";
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+        src: url("./fonts/title-song-light.woff2") format("woff2");
+      }
+
       :root {
         --panel-bg: rgba(18, 20, 24, 0.72);
         --panel-border: rgba(255, 255, 255, 0.14);
@@ -37,8 +48,6 @@
       }
 
       /* 左上角标题 */
-      /* 长宋没自托管字体文件（汉仪长宋是商业字体），所以走系统栈：
-         装了长宋就用，没装回落到宋体/明体，反正衬线观感一致。 */
       .title-block {
         position: fixed;
         top: 30px;
@@ -49,9 +58,10 @@
         white-space: nowrap;
         /* 画面是亮的雲层，得靠描边压住对比度；两层：边缘提清晰度 + 大范围柔光 */
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 6px 26px rgba(0, 0, 0, 0.45);
-        font-family: "汉仪长宋", "汉仪长宋简", "HYChangSongJ", "HYChangSong",
-          "Source Han Serif SC", "Noto Serif CJK SC", "Noto Serif SC",
+        font-family: "CloudTitleSerif", "思源宋体", "Source Han Serif SC",
+          "Source Han Serif CN", "Noto Serif CJK SC", "Noto Serif SC",
           "Songti SC", "STSong", "SimSun", "宋体", "MingLiU", serif;
+        font-weight: 300;
       }
 
       /* 眉题：小 + 大字距，和主标题拉开接近 10 倍的字号差 */
@@ -68,10 +78,13 @@
       .title-block h1 {
         margin: 0;
         font-size: clamp(1.25rem, min(7.5vw, 13vh), 6.5rem);
-        font-weight: 500;
+        font-weight: 300;
         line-height: 1.02;
         letter-spacing: 0.08em;
         white-space: nowrap;
+        /* 纵向拉伸到 1.1 倍（以中线为准，上下各拉 5%），字形更「长」一点 */
+        transform: scaleY(1.1);
+        transform-origin: left center;
       }
 
       /* 署名行：小字标签 + 大一号的斜体英文名 */
