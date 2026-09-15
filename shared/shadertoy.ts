@@ -38,6 +38,48 @@ let iSpeed_ = 5.0;
 let iTime = 0.0;
 let prevDrawTime: number | undefined = undefined;
 
+/** 自定义 uniform 的取值：数字按 1f 传，数组按长度分派到 1fv/2fv/3fv/4fv */
+export type UniformValue = number | number[] | Float32Array | Int32Array;
+
+export interface ShaderToyOptions {
+  /** 每帧调用一次，返回值里的 uniform 会逐个设置（用于挂实时滑杆） */
+  getUniforms?: () => Record<string, UniformValue>;
+}
+
+function setExtraUniform(
+  gl: WebGL2RenderingContext,
+  program: WebGLProgram,
+  name: string,
+  value: UniformValue
+): void {
+  const loc = gl.getUniformLocation(program, name);
+  if (!loc) {
+    // uniform 被优化掉（没在 shader 里用到）时会拿到 null，跳过即可
+    return;
+  }
+  if (typeof value === "number") {
+    gl.uniform1f(loc, value);
+    return;
+  }
+  const arr = value instanceof Float32Array ? value : new Float32Array(value);
+  switch (arr.length) {
+    case 1:
+      gl.uniform1fv(loc, arr);
+      break;
+    case 2:
+      gl.uniform2fv(loc, arr);
+      break;
+    case 3:
+      gl.uniform3fv(loc, arr);
+      break;
+    case 4:
+      gl.uniform4fv(loc, arr);
+      break;
+    default:
+      gl.uniform1fv(loc, arr);
+  }
+}
+
 export function setIMouse(
   x: number | null,
   y: number | null,
@@ -57,7 +99,8 @@ export function setISpeed_(speed: number) {
 function playProgram(
   gl: WebGL2RenderingContext,
   program: WebGLProgram,
-  textureImages: (HTMLImageElement | null)[] = []
+  textureImages: (HTMLImageElement | null)[] = [],
+  options: ShaderToyOptions = {}
 ) {
   gl.useProgram(program);
   const quadPositions = new Float32Array([
@@ -139,6 +182,14 @@ function playProgram(
       iMouse.clickY
     );
 
+    // 页面自定义的 uniform（滑杆等），每帧重新读，保证实时生效
+    if (options.getUniforms) {
+      const extra = options.getUniforms();
+      for (const name in extra) {
+        setExtraUniform(gl, program, name, extra[name]);
+      }
+    }
+
     // draw
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
@@ -181,7 +232,8 @@ function resizeCanvas(
 export function renderShaderToy(
   canvas: HTMLCanvasElement,
   mainImageSource: string,
-  textureImages: (HTMLImageElement | null)[] = []
+  textureImages: (HTMLImageElement | null)[] = [],
+  options: ShaderToyOptions = {}
 ): void {
   const gl = canvas.getContext("webgl2");
 
@@ -260,5 +312,5 @@ export function renderShaderToy(
     return;
   }
 
-  playProgram(gl, program, textureImages);
+  playProgram(gl, program, textureImages, options);
 }

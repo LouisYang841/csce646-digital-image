@@ -1,10 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Up in the Cloud Sea</title>
+    <title>云间列车 | Up in the Cloud Sea</title>
     <style>
+      :root {
+        --panel-bg: rgba(18, 20, 24, 0.72);
+        --panel-border: rgba(255, 255, 255, 0.14);
+        --text: rgba(255, 255, 255, 0.92);
+        --text-dim: rgba(255, 255, 255, 0.55);
+        --accent: #ffb066;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       html,
       body {
         margin: 0;
@@ -13,6 +25,9 @@
         height: 100%;
         overflow: hidden;
         background: #000;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        color: var(--text);
       }
 
       #my-canvas {
@@ -20,11 +35,247 @@
         width: 100%;
         height: 100%;
       }
+
+      /* 左上角标题 */
+      .title-block {
+        position: fixed;
+        top: 28px;
+        left: 32px;
+        pointer-events: none;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+      }
+
+      .title-block .eyebrow {
+        margin: 0 0 6px;
+        font-size: 10px;
+        letter-spacing: 0.22em;
+        color: var(--text-dim);
+      }
+
+      .title-block h1 {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+      }
+
+      .title-block .subtitle {
+        margin: 8px 0 0;
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      /* 右侧参数面板 */
+      .panel {
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        width: 236px;
+        padding: 14px 16px 12px;
+        border: 1px solid var(--panel-border);
+        border-radius: 14px;
+        background: var(--panel-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .panel.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-50%) translateX(12px);
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .panel-head .title {
+        font-size: 13px;
+        letter-spacing: 0.08em;
+      }
+
+      .panel-foot {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      button {
+        flex: 1;
+        padding: 7px 0;
+        font-size: 12px;
+        font-family: inherit;
+        color: var(--text);
+        cursor: pointer;
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.07);
+        transition: background 0.15s ease;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      button.ghost {
+        flex: 0 0 auto;
+        padding: 3px 9px;
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        color: var(--text-dim);
+        border-radius: 6px;
+      }
+
+      /* 滑杆 */
+      .row {
+        margin-bottom: 11px;
+      }
+
+      .row-top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 3px;
+      }
+
+      .row-top .label {
+        font-size: 11.5px;
+        color: var(--text);
+      }
+
+      .row-top .value {
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        color: var(--accent);
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        display: block;
+        width: 100%;
+        height: 14px;
+        margin: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 3px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.22);
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 11px;
+        height: 11px;
+        margin-top: -4px;
+        border: none;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      input[type="range"]::-moz-range-track {
+        height: 3px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.22);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 11px;
+        height: 11px;
+        border: none;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      /* 面板开关 */
+      #panel-toggle {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        padding: 0;
+        font-size: 15px;
+        line-height: 1;
+        border-radius: 50%;
+        background: var(--panel-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+
+      #loading {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        color: var(--text-dim);
+        background: #000;
+        transition: opacity 0.4s ease;
+      }
+
+      #loading.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      @media (max-width: 720px) {
+        .panel {
+          right: 10px;
+          width: 190px;
+          padding: 10px 12px;
+        }
+        .title-block {
+          top: 18px;
+          left: 18px;
+        }
+        .title-block h1 {
+          font-size: 24px;
+        }
+      }
     </style>
   </head>
 
   <body>
     <canvas id="my-canvas"></canvas>
+
+    <header class="title-block">
+      <p class="eyebrow">PROCEDURAL LANDSCAPE</p>
+      <h1>云间列车</h1>
+      <p class="subtitle">程序化生成的云层列车 · 课程作业 · 基于 mdb 的 ShaderToy 作品</p>
+    </header>
+
+    <button id="panel-toggle" title="显示 / 隐藏参数面板" aria-label="显示或隐藏参数面板">☰</button>
+
+    <aside class="panel" id="panel">
+      <div class="panel-head">
+        <span class="title" id="panel-title">场景参数</span>
+        <button class="ghost" id="lang-toggle" title="切换语言">EN</button>
+      </div>
+
+      <div id="sliders"></div>
+
+      <div class="panel-foot">
+        <button id="reset">重置</button>
+        <button id="pause">暂停</button>
+      </div>
+    </aside>
+
+    <div id="loading">LOADING…</div>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
