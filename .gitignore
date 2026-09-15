@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Vite 加载配置文件时生成的临时文件
+vite.config.ts.timestamp-*.mjs
