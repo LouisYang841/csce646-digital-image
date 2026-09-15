@@ -7,6 +7,7 @@ const BLUE_NOISE_URL = "../pr01/blue_noise.png";
 
 type ParamKey =
   | "sunPos"
+  | "sunIntensity"
   | "cloudShape"
   | "noiseDetail"
   | "exposure"
@@ -28,17 +29,19 @@ interface ParamDef {
   en: string;
 }
 
-// 默认值取自参考面板
+// 默认值全部取「恒等值」，保证一进页面看到的画面和原版（pr01）一致。
+// 想调出参考图那种浓烈暖色，把「色调饱和度」拉到 1.9 左右即可。
 const PARAMS: ParamDef[] = [
   { key: "sunPos", uniform: "uSunPos", min: -1, max: 1, step: 0.01, value: 0.17, decimals: 2, zh: "太阳位置", en: "Sun Position" },
+  { key: "sunIntensity", uniform: "uSunIntensity", min: 0, max: 1, step: 0.01, value: 0.0, decimals: 2, zh: "太阳强度", en: "Sun Intensity" },
   { key: "cloudShape", uniform: "uCloudShape", min: 0, max: 2, step: 0.01, value: 1.0, decimals: 2, zh: "云层形状", en: "Cloud Shape" },
-  { key: "noiseDetail", uniform: "uNoiseDetail", min: 1, max: 10, step: 1, value: 7, decimals: 2, zh: "噪声细节", en: "Noise Detail" },
+  { key: "noiseDetail", uniform: "uNoiseDetail", min: 1, max: 10, step: 1, value: 8, decimals: 2, zh: "噪声细节", en: "Noise Detail" },
   { key: "exposure", uniform: "uExposure", min: 0, max: 3, step: 0.01, value: 1.0, decimals: 2, zh: "曝光度", en: "Exposure" },
-  { key: "saturation", uniform: "uSaturation", min: 0, max: 2, step: 0.01, value: 1.95, decimals: 2, zh: "色调饱和度", en: "Saturation" },
+  { key: "saturation", uniform: "uSaturation", min: 0, max: 2, step: 0.01, value: 1.0, decimals: 2, zh: "色调饱和度", en: "Saturation" },
   { key: "warmTemp", uniform: "uWarmTemp", min: -1, max: 1, step: 0.01, value: 0.0, decimals: 2, zh: "整体色温", en: "Color Temperature" },
-  { key: "coolTemp", uniform: "uCoolTemp", min: 0, max: 1, step: 0.01, value: 0.51, decimals: 2, zh: "冷色调色温", en: "Cool Tone Temperature" },
-  // 流动速度不传给 shader，直接调引擎的时间倍率
-  { key: "flowSpeed", min: 0, max: 2, step: 0.01, value: 0.55, decimals: 2, zh: "流动速度", en: "Flow Speed" },
+  { key: "coolTemp", uniform: "uCoolTemp", min: 0, max: 1, step: 0.01, value: 0.5, decimals: 2, zh: "冷色调色温", en: "Cool Tone Temperature" },
+  // 流动速度不传给 shader，直接调引擎的时间倍率（1 = 原版速度）
+  { key: "flowSpeed", min: 0, max: 2, step: 0.01, value: 1.0, decimals: 2, zh: "流动速度", en: "Flow Speed" },
 ];
 
 const TEXTS = {

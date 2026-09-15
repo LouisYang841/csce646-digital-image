@@ -3,18 +3,23 @@
 // 基于 pr01 的云海 shader（原作者 Tianxiu (Tyson) Zhou，源头是 ShaderToy 上
 // mdb 的作品 Ndc3zl），把原先写死的几个量提成 uniform，方便用面板实时调。
 //
-// 新增 uniform（面板上的 8 个滑杆）：
-//   uSunPos      太阳位置     -1 .. 1   （天空里那团暖光的垂直位置）
-//   uCloudShape  云层形状      0 .. 2   （云层轮廓的起伏幅度）
-//   uNoiseDetail 噪声细节      1 .. 10  （fbm 的叠加层数）
-//   uExposure    曝光度        0 .. 3
-//   uSaturation  色调饱和度    0 .. 2
-//   uWarmTemp    整体色温     -1 .. 1   （正=暖，负=冷）
-//   uCoolTemp    冷色调色温    0 .. 1   （只作用于暗部；0.5 为中性）
-//   （流动速度不走 uniform，由引擎的 iSpeed_ 控制）
+// 重要：所有参数的默认值都取「恒等值」，保证初始画面与原版逐像素一致。
+// 换句话说，不动任何滑杆时这个 shader 和 pr01 那个是等价的。
+//
+// 新增 uniform（面板上的 9 个滑杆）：
+//   uSunPos         太阳位置     -1 .. 1   （默认 0.17，但强度为 0 时不显示）
+//   uSunIntensity   太阳强度      0 .. 1   （默认 0 = 关闭，保证和原版一致）
+//   uCloudShape     云层形状      0 .. 2   （恒等值 1）
+//   uNoiseDetail    噪声细节      1 .. 10  （恒等值 8，原版写死的就是 8）
+//   uExposure       曝光度        0 .. 3   （恒等值 1）
+//   uSaturation     色调饱和度    0 .. 2   （恒等值 1）
+//   uWarmTemp       整体色温     -1 .. 1   （恒等值 0）
+//   uCoolTemp       冷色调色温    0 .. 1   （恒等值 0.5）
+//   （流动速度不走 uniform，由引擎的 iSpeed_ 控制，恒等值 1）
 
 const landscapeSource = `
 uniform float uSunPos;
+uniform float uSunIntensity;
 uniform float uCloudShape;
 uniform float uNoiseDetail;
 uniform float uExposure;
@@ -236,10 +241,8 @@ vec4 background(vec2 uv, float t){
     layer(0.1, vec3(0.92, 0.85, 0.82));
     layer(0., vec3(1.0, 0.94, 0.91));
 
-    // 没被任何云层挡住的就是天空
-    vec3 sky = mix(vec3(0.16, 0.28, 0.58), vec3(0.58, 0.70, 1.0),
-                   smoothstep(-0.1, 1.0, uv.y));
-    return vec4(sky, 1.);
+    // 没被任何云层挡住的就是天空（与原版一致的平涂色）
+    return vec4(0.58, 0.7, 1.0, 1.);
 }
 
 vec3 genRaster( vec2 uv )
@@ -362,36 +365,39 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec3 col = genRaster( uvGen );
 
     // 太阳 ////////////////////////////////////////////////////////////////////
-    // 作为大气光晕叠在云层之上：如果只画在天空里，云一挡就完全看不见了，
-    // 那样 uSunPos 这个滑杆也就没意义。用 screen 混合，越靠中心越亮。
-    float sunY = mix(-0.35, 1.35, (uSunPos + 1.0) * 0.5);
-    float sunDist = distance(uvGen, vec2(0.5, sunY));
-    vec3 sunGlow = vec3(1.0, 0.60, 0.28) * 0.30 * exp(-3.0 * sunDist)
-                 + vec3(1.0, 0.86, 0.66) * 0.55 * exp(-16.0 * sunDist);
-    col = 1.0 - (1.0 - col) * (1.0 - clamp(sunGlow, 0.0, 1.0));
+    // 默认强度 0，整个分支不执行 —— 保证初始画面和原版完全一致。
+    // 强度调起来后它作为大气光晕叠在云层之上；只画在天空里的话，云一挡就看不见了。
+    if (uSunIntensity > 0.0) {
+        float sunY = mix(-0.35, 1.35, (uSunPos + 1.0) * 0.5);
+        float sunDist = distance(uvGen, vec2(0.5, sunY));
+        vec3 sunGlow = vec3(1.0, 0.60, 0.28) * 0.30 * exp(-3.0 * sunDist)
+                     + vec3(1.0, 0.86, 0.66) * 0.55 * exp(-16.0 * sunDist);
+        col = 1.0 - (1.0 - col) * (1.0 - clamp(sunGlow * uSunIntensity, 0.0, 1.0));
+    }
 
     // Vignett correction
     vec2 uvVignett = fragCoord/iResolution.xy;
     col = vignettCorrection( col, uvVignett);
 
     // 调色 ////////////////////////////////////////////////////////////////////
+    // 下面四段的默认值都是恒等变换，不动滑杆时画面与原版一致。
     col *= uExposure;
 
-    // 饱和度
+    // 饱和度：uSaturation = 1 时 mix(luma, col, 1.0) === col
     float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));
     col = mix(vec3(luma), col, uSaturation);
 
-    // 整体色温：正数偏暖（加红减蓝），负数偏冷
+    // 整体色温：正数偏暖（加红减蓝），负数偏冷；uWarmTemp = 0 时是 vec3(1)
     col *= vec3(1.0 + 0.30*uWarmTemp, 1.0, 1.0 - 0.30*uWarmTemp);
 
-    // 冷色调色温：按亮度做遮罩，只压暗部，0.5 为中性
+    // 冷色调色温：按亮度做遮罩只压暗部，uCoolTemp = 0.5 时是 vec3(1)
     float coolT = clamp((uCoolTemp - 0.5) * 2.0, -1.0, 1.0);
     float shadowMask = 1.0 - smoothstep(0.0, 0.7, dot(col, vec3(0.2126, 0.7152, 0.0722)));
     col *= mix(vec3(1.0),
                vec3(1.0 - 0.30*coolT, 1.0 - 0.05*coolT, 1.0 + 0.45*coolT),
                shadowMask);
 
-    fragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+    fragColor = vec4(col, 1.0);
 }
 `;
 
