@@ -5,6 +5,15 @@ import landscapeSource from "./landscape-source";
 // 相对路径按文档地址解析：/cloud/ → /pr01/blue_noise.png
 const BLUE_NOISE_URL = "../pr01/blue_noise.png";
 
+// 昼夜循环：太阳位置从 SUN_MIN 匀速涨到 SUN_MAX 再回卷。
+// 超过 1.0 就已经在画面上沿之外了，shader 那边会据此把画面压暗。
+const SUN_MIN = -1.0;
+const SUN_MAX = 2.2;
+const SUN_CYCLE = SUN_MAX - SUN_MIN; // 3.2
+const SUN_CYCLE_SECONDS = 60; // 流动速度 = 1 时走完一个完整昼夜的秒数
+const SUN_PER_SEC = SUN_CYCLE / SUN_CYCLE_SECONDS;
+const SUN_START = 0.17; // 初值：此时 shader 的昼夜因子正好是 1.30，与原版一致
+
 type ParamKey =
   | "sunPos"
   | "sunIntensity"
@@ -32,7 +41,7 @@ interface ParamDef {
 // 默认值全部取「恒等值」，保证一进页面看到的画面和原版（pr01）一致。
 // 想调出参考图那种浓烈暖色，把「色调饱和度」拉到 1.9 左右即可。
 const PARAMS: ParamDef[] = [
-  { key: "sunPos", uniform: "uSunPos", min: -1, max: 1, step: 0.01, value: 0.17, decimals: 2, zh: "太阳位置", en: "Sun Position" },
+  { key: "sunPos", uniform: "uSunPos", min: SUN_MIN, max: SUN_MAX, step: 0.01, value: SUN_START, decimals: 2, zh: "太阳位置", en: "Sun Position" },
   { key: "sunIntensity", uniform: "uSunIntensity", min: 0, max: 1, step: 0.01, value: 0.0, decimals: 2, zh: "太阳强度", en: "Sun Intensity" },
   { key: "cloudShape", uniform: "uCloudShape", min: 0, max: 2, step: 0.01, value: 1.0, decimals: 2, zh: "云层形状", en: "Cloud Shape" },
   { key: "noiseDetail", uniform: "uNoiseDetail", min: 1, max: 10, step: 1, value: 8, decimals: 2, zh: "噪声细节", en: "Noise Detail" },
@@ -54,6 +63,10 @@ const defaults = { ...state };
 
 let paused = false;
 let lang: "zh" | "en" = "zh";
+/** 用户正在拖「太阳位置」时不回写滑块，免得和自动递增打架 */
+let draggingSun = false;
+let lastFrameMs: number | null = null;
+let lastUiSyncMs = 0;
 
 interface Row {
   def: ParamDef;
@@ -76,8 +89,36 @@ function applySpeed(): void {
   setISpeed_(paused ? 0 : state.flowSpeed);
 }
 
+/** 太阳位置自动递增（暂停或流动速度为 0 时不动），走到头回卷 */
+function advanceSun(now: number): void {
+  if (lastFrameMs !== null && !paused) {
+    const dt = (now - lastFrameMs) / 1000;
+    state.sunPos += dt * state.flowSpeed * SUN_PER_SEC;
+    if (state.sunPos > SUN_MAX) {
+      state.sunPos -= SUN_CYCLE;
+    }
+  }
+  lastFrameMs = now;
+}
+
+function setSunRow(value: number): void {
+  const row = rows.get("sunPos");
+  if (!row) return;
+  row.input.value = String(value);
+  row.value.textContent = value.toFixed(row.def.decimals);
+}
+
 /** 每帧被引擎调用，返回当前所有需要下发的 uniform */
 function getUniforms(): Record<string, UniformValue> {
+  const now = performance.now();
+  advanceSun(now);
+
+  // 滑块跟着太阳一起走（拖动过程中不覆盖用户的值）
+  if (!draggingSun && now - lastUiSyncMs > 100) {
+    lastUiSyncMs = now;
+    setSunRow(state.sunPos);
+  }
+
   const uniforms: Record<string, UniformValue> = {};
   for (const def of PARAMS) {
     if (def.uniform) {
@@ -117,6 +158,16 @@ function buildRows(): void {
         applySpeed();
       }
     });
+
+    // 太阳位置会被自动改写，拖动期间得让用户说了算
+    if (def.key === "sunPos") {
+      input.addEventListener("pointerdown", () => {
+        draggingSun = true;
+      });
+      input.addEventListener("change", () => {
+        draggingSun = false;
+      });
+    }
 
     top.append(label, value);
     row.append(top, input);
@@ -166,6 +217,11 @@ function main(): void {
   langToggle.addEventListener("click", () => {
     lang = lang === "zh" ? "en" : "zh";
     refreshTexts();
+  });
+
+  // 松开鼠标（不管在哪松）就交还给自动递增
+  window.addEventListener("pointerup", () => {
+    draggingSun = false;
   });
 
   // 空格键也能暂停
